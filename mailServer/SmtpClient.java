@@ -11,11 +11,10 @@ public class SmtpClient {
         String smtpServer = "smtp.gmail.com";
         int port = 587;
         String fromEmail = "kt52488872@gmail.com";
-        String toEmail1 = "leegh963@naver.com";
+        String[] toEmails = {"leegh963@naver.com"};
         String username = "kt52488872@gmail.com";
         String password = ""; // 앱 비밀번호나 일반 비밀번호
         String subject = "Test Email from Java";
-        String body = "Hello, this is a test email sent via raw SMTP commands in Java.";
 
 
         try {
@@ -36,7 +35,13 @@ public class SmtpClient {
             writer.println("STARTTLS");
             readResponse(reader);
 
+            // TLS 를 이용하는 sslContext 를 생성, sslContext 는 ssl/tls 의 설정들을 담는다
             SSLContext sslContext = SSLContext.getInstance("TLS");
+
+            // sslContext.init 을 이용해 ssl 설정
+            // keyManager 는 나를 상대방에게 인증시킬 때 사용
+            // trustManager 는 상대방의 인증을 확인할 때 사용
+            // 마지막 secureRandom 은 암호키 생성에 무작위성 부여
             sslContext.init(null, new TrustManager[]{new X509TrustManager() {
                 public X509Certificate[] getAcceptedIssuers() {
                     return null;
@@ -46,6 +51,9 @@ public class SmtpClient {
 
                 public void checkServerTrusted(X509Certificate[] certs, String authType) { }
             }}, new java.security.SecureRandom());
+
+            // sslContext 를 이용해 socketFactory 를 생성하고
+            // 여기서 createSocket 을 이용해 기존 socket 을 ssl wrapping 한다.
 
             SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
             SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(
@@ -76,24 +84,19 @@ public class SmtpClient {
             sslWriter.println("MAIL FROM:<" + fromEmail + ">");
             readResponse(sslReader);
 
-            sslWriter.println("RCPT TO:<" + toEmail1 + ">");
-            readResponse(sslReader);
 
-//            sslWriter.println("RCPT TO:<" + toEmail2 + ">");
-//            readResponse(sslReader);
+            // 수신자 추가
+            for (int i = 0; i < toEmails.length; i++) {
+                sslWriter.println("RCPT TO:<" + toEmails[i] + ">");
+                readResponse(sslReader);
+            }
 
+            // 이메일의 본문 시작임을 알림
             sslWriter.println("DATA");
             readResponse(sslReader);
 
-            // 메일 본문 작성
-            sslWriter.println("Subject: " + subject);
-            sslWriter.println("From: " + fromEmail);
-            sslWriter.println("To: " + toEmail1);
-            sslWriter.println();
-            sslWriter.print(body);
-            sslWriter.print("\r\n");
-            sslWriter.print(".");
-            sslWriter.print("\r\n");
+            // 메일 본문을 구성해서 보낸다
+            sslWriter.print(makeBody(subject , fromEmail , toEmails));
             sslWriter.flush();
             readResponse(sslReader);
 
@@ -116,9 +119,57 @@ public class SmtpClient {
         }
     }
 
-    // SMTP 응답 읽기 헬퍼 메서드
+    private static String makeBody(String subject, String fromEmail , String[] toEmails){
+
+        String body = "Hello From Java Client"; // 본문 내용
+        String fileContent = "저메추";
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        // 제목 , From , to 적어주고
+        stringBuilder.append("Subject: ").append(subject).append("\n");
+        stringBuilder.append("From: ").append(fromEmail).append("\n");
+
+        for (String toEmail : toEmails) {
+            stringBuilder.append("To: ").append(toEmail).append("\n");
+        }
+        // 헤더 부분 , multipart 사용을 위해 boundary 지정 (multipart 의 경우 boundary 를 이용해 본문을 구분)
+        stringBuilder.append("MIME-Version: 1.0").append("\n");
+        stringBuilder.append("Content-Type: multipart/mixed; boundary=\"simple_boundary\"\n").append("\n");
+        stringBuilder.append("\n");
+
+        // 여기서 부터 body , 본문 내용 추가
+        stringBuilder.append("--simple_boundary").append("\n");
+        stringBuilder.append("Content-Type: text/plain; charset=\"utf-8\"\n").append("\n");
+        stringBuilder.append(body).append("\n");
+
+        // boundary 로 구분하고, txt 파일 추가
+        stringBuilder.append("--simple_boundary").append("\n");
+        stringBuilder.append("Content-Type: application/octet-stream").append("\n");
+        stringBuilder.append("Content-Disposition: attachment; filename=\"file.txt\"").append("\n");
+        stringBuilder.append("Content-Transfer-Encoding: base64").append("\n");
+        stringBuilder.append("\n");
+
+        // file 내용을 Base64 인코딩해서 전송
+        stringBuilder.append(Base64.getEncoder().encodeToString(fileContent.getBytes())).append("\n");
+
+        // 이 boundary 를 통해 MIME 본문이 끝났음을 알려준다
+        stringBuilder.append("--simple_boundary--").append("\n");
+
+        // <CRLF>.<CRLF> 를 이용해 메시지의 전송이 끝남을 나타낸다.
+        stringBuilder.append("\r\n");
+        stringBuilder.append(".");
+        stringBuilder.append("\r\n");
+
+        return stringBuilder.toString();
+    }
+
+    // SMTP 응답 읽기 메서드
     private static void readResponse(BufferedReader reader) throws IOException {
         String line;
+
+        // SMTP 응답의 형태는 3자리 숫자 코드 + ' ' (공백) 혹은 '-' 으로 온다.
+        // 3자리 코드 뒤에 '-' 이 아닌 공백인 경우는 응답의 마지막 줄 이라는 뜻이므로 break
         while ((line = reader.readLine()) != null) {
             System.out.println("Server: " + line);
             if (line.charAt(3) == ' ') {
@@ -127,3 +178,4 @@ public class SmtpClient {
         }
     }
 }
+
