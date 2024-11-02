@@ -11,7 +11,7 @@ public class IMAPClient {
     public static void main(String[] args) {
         String host = "imap.naver.com";
         int port = 993;
-        String username = "leegh963@naver.com";
+        String username = "sj102300@naver.com";
         String password = "";
 
         try {
@@ -53,7 +53,8 @@ public class IMAPClient {
             sendCommand(writer, reader, "a2 SELECT INBOX");
 
             // 3. 메일 목록 가져오기
-            sendCommand(writer, reader, "a3 SEARCH ALL");
+             writer.println("a3 SEARCH ALL");
+             System.out.println("C: " + "a3 SEARCH ALL");
 
             // 검색 결과에서 메일 ID 목록을 추출하고, 각 ID에 대해 메일을 FETCH
             String response;
@@ -62,7 +63,7 @@ public class IMAPClient {
                 if (response.startsWith("* SEARCH")) {
                     String[] ids = response.split(" ");
                     // 첫 번째 요소는 "* SEARCH"이므로 그 이후가 메일 ID
-                    for (int i = 2; i < ids.length; i++) {
+                    for (int i = 2; i < 10; i++) {
                         String id = ids[i];
                         // 각 메일 ID에 대해 FETCH 명령어로 메일 내용 가져오기
                         sendCommand(writer, reader, "a4 FETCH " + id + " (BODY[HEADER] BODY[TEXT])");
