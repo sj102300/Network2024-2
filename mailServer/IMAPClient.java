@@ -83,27 +83,6 @@ public class IMAPClient {
         }
     }
 
-    private static int getMessageCount(PrintWriter writer, BufferedReader reader) throws Exception {
-        writer.println("a2 STATUS INBOX (MESSAGES)");
-        System.out.println("C: a2 STATUS INBOX (MESSAGES)");
-
-        String response;
-        int messageCount = 0;
-
-        while ((response = reader.readLine()) != null) {
-            System.out.println("S: " + response);
-            if (response.contains("MESSAGES")) {
-                // "MESSAGES n"에서 n 값을 추출
-                String[] parts = response.split(" ");
-                messageCount = Integer.parseInt(parts[4]);
-            }
-            if (response.startsWith("a2 OK")) {
-                break;
-            }
-        }
-        return messageCount;
-    }
-
     private static void sendCommand(PrintWriter writer, BufferedReader reader, String command) throws Exception {
         writer.println(command);
         System.out.println("C: " + command);
