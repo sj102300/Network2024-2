@@ -26,9 +26,11 @@ public class IMAPClient {
                     return null;
                 }
 
-                public void checkClientTrusted(X509Certificate[] certs, String authType) { }
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
 
-                public void checkServerTrusted(X509Certificate[] certs, String authType) { }
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
             }}, new java.security.SecureRandom());
 
 
@@ -47,30 +49,43 @@ public class IMAPClient {
             System.out.println("Server: " + reader.readLine());
 
             // 1. 로그인
-            sendCommand(writer, reader, "a1 LOGIN "  + "\"" + username + "\"" + " "  + "\"" + password + "\"");
+            sendCommand(writer, reader, "a1 LOGIN " + "\"" + username + "\"" + " " + "\"" + password + "\"");
 
             // 2. 받은 편지함 선택
             sendCommand(writer, reader, "a2 SELECT INBOX");
 
             // 3. 메일 목록 가져오기
-             writer.println("a3 SEARCH ALL");
-             System.out.println("C: " + "a3 SEARCH ALL");
+            writer.println("a3 SEARCH ALL");
+            System.out.println("C: " + "a3 SEARCH UNSEEN");
 
             // 검색 결과에서 메일 ID 목록을 추출하고, 각 ID에 대해 메일을 FETCH
             String response;
+            String[] ids = new String[5];
             while ((response = reader.readLine()) != null) {
                 System.out.println("S: " + response);
                 if (response.startsWith("* SEARCH")) {
-                    String[] ids = response.split(" ");
+                    String[] tmp = response.split(" ");
                     // 첫 번째 요소는 "* SEARCH"이므로 그 이후가 메일 ID
-                    for (int i = 2; i < 10; i++) {
-                        String id = ids[i];
-                        // 각 메일 ID에 대해 FETCH 명령어로 메일 내용 가져오기
-                        sendCommand(writer, reader, "a4 FETCH " + id + " (BODY[HEADER] BODY[TEXT])");
+                    int idx = 0;
+                    for (int i = tmp.length - 1; i >= 2 && i >= tmp.length - 5; i--) {
+                        ids[idx++] = tmp[i];
                     }
                 }
                 if (response.startsWith("a3 OK")) {
                     break;
+                }
+            }
+
+            for(int i=0;i<1;i++) {
+                writer.println("a4 FETCH " + ids[i] + " (BODY[HEADER] BODY[TEXT])");
+                System.out.println("C: " + "a4 FETCH " + ids[i] + " (BODY[HEADER] BODY[TEXT])");
+
+                while ((response = reader.readLine()) != null) {
+                    System.out.println("S: " + response);
+                    // 명령어에 대한 응답이 완료되었는지 확인 (태그가 "OK" 또는 "NO"로 끝나는 경우)
+                    if (response.startsWith("a") && (response.contains("OK") || response.contains("NO") || response.contains("BAD"))) {
+                        break;
+                    }
                 }
             }
 
