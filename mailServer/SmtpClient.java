@@ -8,12 +8,12 @@ import java.util.Base64;
 
 public class SmtpClient {
     public static void main(String[] args) {
-        String smtpServer = "smtp.gmail.com";
+        String smtpServer = "smtp.naver.com";
         int port = 587;
-        String fromEmail = "kt52488872@gmail.com";
-        String[] toEmails = {"leegh963@naver.com"};
-        String username = "kt52488872@gmail.com";
-        String password = ""; // 앱 비밀번호나 일반 비밀번호
+        String fromEmail = "leegh963@naver.com";
+        String[] toEmails = {"kt52488872@gmail.com" , "kimjm0226@naver.com"};
+        String username = "leegh963@naver.com";
+        String password = "QWC999FSWD6Z"; // 앱 비밀번호나 일반 비밀번호
         String subject = "Test Email from Java";
 
 
@@ -129,10 +129,13 @@ public class SmtpClient {
         // 제목 , From , to 적어주고
         stringBuilder.append("Subject: ").append(subject).append("\n");
         stringBuilder.append("From: ").append(fromEmail).append("\n");
+        stringBuilder.append("To: ");
 
         for (String toEmail : toEmails) {
-            stringBuilder.append("To: ").append(toEmail).append("\n");
+            stringBuilder.append(toEmail).append(" ");
         }
+
+        stringBuilder.append("\n");
         // 헤더 부분 , multipart 사용을 위해 boundary 지정 (multipart 의 경우 boundary 를 이용해 본문을 구분)
         stringBuilder.append("MIME-Version: 1.0").append("\n");
         stringBuilder.append("Content-Type: multipart/mixed; boundary=\"simple_boundary\"\n").append("\n");
