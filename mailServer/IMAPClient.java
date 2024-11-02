@@ -6,14 +6,13 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
-import java.util.Base64;
 
 public class IMAPClient {
     public static void main(String[] args) {
         String host = "imap.naver.com";
         int port = 993;
         String username = "leegh963@naver.com";
-        String password = "QWC999FSWD6Z";
+        String password = "";
 
         try {
             // SSL 소켓 생성 및 연결
@@ -54,16 +53,27 @@ public class IMAPClient {
             sendCommand(writer, reader, "a2 SELECT INBOX");
 
             // 3. 메일 목록 가져오기
-            int messageCount = getMessageCount(writer, reader);
-            if (messageCount > 0) {
-                // 4. 가장 최근 메일 가져오기 (메일 ID가 가장 큰 번호가 가장 최근 메일)
-                sendCommand(writer, reader, "a3 FETCH " + messageCount + " (BODY[HEADER.FIELDS (SUBJECT FROM DATE)])");
-            } else {
-                System.out.println("No emails found in INBOX.");
+            sendCommand(writer, reader, "a3 SEARCH ALL");
+
+            // 검색 결과에서 메일 ID 목록을 추출하고, 각 ID에 대해 메일을 FETCH
+            String response;
+            while ((response = reader.readLine()) != null) {
+                System.out.println("S: " + response);
+                if (response.startsWith("* SEARCH")) {
+                    String[] ids = response.split(" ");
+                    // 첫 번째 요소는 "* SEARCH"이므로 그 이후가 메일 ID
+                    for (int i = 2; i < ids.length; i++) {
+                        String id = ids[i];
+                        // 각 메일 ID에 대해 FETCH 명령어로 메일 내용 가져오기
+                        sendCommand(writer, reader, "a4 FETCH " + id + " (BODY[HEADER] BODY[TEXT])");
+                    }
+                }
+                if (response.startsWith("a3 OK")) {
+                    break;
+                }
             }
 
-            // 4. 로그아웃
-            sendCommand(writer, reader, "a4 LOGOUT");
+            sendCommand(writer, reader, "a5 LOGOUT");
 
             // 소켓 닫기
             socket.close();
