@@ -13,7 +13,7 @@ public class SmtpClient {
         String fromEmail = "leegh963@naver.com";
         String[] toEmails = {"kt52488872@gmail.com" , "kimjm0226@naver.com"};
         String username = "leegh963@naver.com";
-        String password = "QWC999FSWD6Z"; // 앱 비밀번호나 일반 비밀번호
+        String password = ""; // 앱 비밀번호나 일반 비밀번호
         String subject = "Test Email from Java";
 
 
