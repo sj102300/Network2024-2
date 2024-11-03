@@ -6,7 +6,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -99,6 +98,7 @@ public class IMAPClient {
                         int i1 = response.indexOf("<") + 1;
                         int i2 = response.indexOf(">");
 
+                        // 메일에 괄호가 포함되어 오는 경우와 아닌 경우 분할 <www.naver.com> 과 www.naver.com 구분
                         if(i1 == 0) header.put("From" , response.substring(6));
                         else header.put("From", response.substring(i1 , i2));
 
@@ -107,14 +107,16 @@ public class IMAPClient {
                         int i1 = response.indexOf("<") + 1;
                         int i2 = response.indexOf(">");
 
+                        // 메일에 괄호가 포함되어 오는 경우와 아닌 경우 분할 <www.naver.com> 과 www.naver.com 구분
                         if (i1 == 0) header.put("To", response.substring(4));
                         else header.put("From", response.substring(i1 , i2));
 
                     } else if(response.contains("Subject:")){
-                        System.out.println("response = " + response);
+
+                        // 제목이 utf-8 로 인코딩 되어 오는 경우와 인코딩 되지 않는 경우 구분
                         if(response.contains("?utf-8") || response.contains("?UTF-8")){
                             int idx1 = response.lastIndexOf("?");
-                            int idx2 = response.indexOf("B") + 2;
+                            int idx2 = response.indexOf("B") + 2; // 인코딩 되는 경우는 형식이 ?인코딩형식?B?인코딩 내용 -> 이 형식이라 B 찾고 그 이후부터 디코딩해서 저장
                             header.put("Subject" ,new String(Base64.getDecoder().decode(response.substring(idx2 , idx1)) , StandardCharsets.UTF_8));
                         }else{
                             header.put("Subject" , response.substring(9));
@@ -124,6 +126,7 @@ public class IMAPClient {
                     }
 
                     if (response.startsWith("Content-Type:") && !response.contains("multipart")) {
+                        // content-type 이 multipart 인 경우 본문에서 content-type 을 가져옴, 맨 아래에 multipart 와 아닌것 구분해서 예시에 작성
                         String contentType = response.substring(13).trim();
                         StringBuilder contentBuilder = new StringBuilder();
 
@@ -180,3 +183,40 @@ public class IMAPClient {
         }
     }
 }
+
+//From: sender@example.com
+//To: receiver@example.com
+//Subject: Test Multipart Email
+//MIME-Version: 1.0
+//Content-Type: multipart/alternative; boundary="boundary123" ---> 여기 부분 content-type 은 안가져오고
+//
+// --boundary123
+//Content-Type: text/plain; charset="UTF-8" -> 여기 부분 content-type 을 가져온 후
+//Content-Transfer-Encoding: 7bit
+//
+//This is the plain text version of the email. --> 내용 가져온다
+//
+//--boundary123
+//Content-Type: text/html; charset="UTF-8"
+//Content-Transfer-Encoding: 7bit
+//
+//        <html>
+//<body>
+//<p>This is the <b>HTML version</b> of the email.</p>
+//</body>
+//</html>
+//
+//        --boundary123--
+
+
+
+// 평문인 경우
+
+//From: sender@example.com
+//To: receiver@example.com
+//Subject: Test Single Part Email
+//MIME-Version: 1.0
+//Content-Type: text/plain; charset="UTF-8" --> 평문인 경우 바로 저장
+//Content-Transfer-Encoding: 7bit
+//
+//This is a simple text email without any attachments or HTML.
