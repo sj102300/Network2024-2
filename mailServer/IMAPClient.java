@@ -16,7 +16,7 @@ public class IMAPClient {
         String host = "imap.naver.com";
         int port = 993;
         String username = "leegh963@naver.com";
-        String password = "QWC999FSWD6Z";
+        String password = "";
 
         try {
             // SSL 소켓 생성 및 연결
