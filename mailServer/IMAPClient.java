@@ -6,13 +6,17 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 public class IMAPClient {
     public static void main(String[] args) {
         String host = "imap.naver.com";
         int port = 993;
-        String username = "sj102300@naver.com";
-        String password = "";
+        String username = "leegh963@naver.com";
+        String password = "QWC999FSWD6Z";
 
         try {
             // SSL 소켓 생성 및 연결
@@ -76,18 +80,82 @@ public class IMAPClient {
                 }
             }
 
-            for(int i=0;i<1;i++) {
+            Map<String, Map<String, Object>> emails = new HashMap<>();
+
+            for(int i=0;i<5;i++) {
                 writer.println("a4 FETCH " + ids[i] + " (BODY[HEADER] BODY[TEXT])");
                 System.out.println("C: " + "a4 FETCH " + ids[i] + " (BODY[HEADER] BODY[TEXT])");
 
+                Map<String, Object> email = new HashMap<>();
+                Map<String, String> header = new HashMap<>();
+                Map<String, Map<String, String>> body = new HashMap<>();
+
+                int bodyCount = 0;
+
                 while ((response = reader.readLine()) != null) {
-                    System.out.println("S: " + response);
+
+                    if(response.contains("From:")){
+
+                        int i1 = response.indexOf("<") + 1;
+                        int i2 = response.indexOf(">");
+
+                        if(i1 == 0) header.put("From" , response.substring(6));
+                        else header.put("From", response.substring(i1 , i2));
+
+                    } else if (response.contains("To:")) {
+
+                        int i1 = response.indexOf("<") + 1;
+                        int i2 = response.indexOf(">");
+
+                        if (i1 == 0) header.put("To", response.substring(4));
+                        else header.put("From", response.substring(i1 , i2));
+
+                    } else if(response.contains("Subject:")){
+                        System.out.println("response = " + response);
+                        if(response.contains("?utf-8") || response.contains("?UTF-8")){
+                            int idx1 = response.lastIndexOf("?");
+                            int idx2 = response.indexOf("B") + 2;
+                            header.put("Subject" ,new String(Base64.getDecoder().decode(response.substring(idx2 , idx1)) , StandardCharsets.UTF_8));
+                        }else{
+                            header.put("Subject" , response.substring(9));
+                        }
+                    } else if(response.contains("Date:")){
+                        header.put("Date" , response.substring(6));
+                    }
+
+                    if (response.startsWith("Content-Type:") && !response.contains("multipart")) {
+                        String contentType = response.substring(13).trim();
+                        StringBuilder contentBuilder = new StringBuilder();
+
+                        // 본문 읽기
+                        while ((response = reader.readLine()) != null
+                                && !response.startsWith("--")) {
+                            if(!response.contains("charset") && !response.contains("Content") && !response.contains("boundary")){
+                                contentBuilder.append(response).append("\n");
+                            }
+                        }
+
+                        // 본문 정보를 body에 저장
+                        Map<String, String> bodyPart = new HashMap<>();
+                        bodyPart.put("Content-Type", contentType);
+                        bodyPart.put("Content", contentBuilder.toString().trim());
+                        body.put(String.valueOf(bodyCount++), bodyPart);
+                    }
+
+
                     // 명령어에 대한 응답이 완료되었는지 확인 (태그가 "OK" 또는 "NO"로 끝나는 경우)
                     if (response.startsWith("a") && (response.contains("OK") || response.contains("NO") || response.contains("BAD"))) {
                         break;
                     }
+
+                    email.put("header", header);
+                    email.put("body", body);
+                    emails.put(String.valueOf(i), email);
+
                 }
+
             }
+            System.out.println("emails = " + emails);
 
             sendCommand(writer, reader, "a5 LOGOUT");
 

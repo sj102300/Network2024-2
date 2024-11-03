@@ -1,6 +1,7 @@
 import javax.net.ssl.*;
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
@@ -11,9 +12,9 @@ public class SmtpClient {
         String smtpServer = "smtp.naver.com";
         int port = 587;
         String fromEmail = "leegh963@naver.com";
-        String[] toEmails = {"kt52488872@gmail.com" , "kimjm0226@naver.com"};
+        String[] toEmails = {"kt52488872@gmail.com"};
         String username = "leegh963@naver.com";
-        String password = ""; // 앱 비밀번호나 일반 비밀번호
+        String password = "QWC999FSWD6Z"; // 앱 비밀번호나 일반 비밀번호
         String subject = "Test Email from Java";
 
 
@@ -63,8 +64,8 @@ public class SmtpClient {
                     true
             );
             sslSocket.startHandshake(); // SSL 핸드셰이크 시작하여 TLS 연결 설정
-            PrintWriter sslWriter = new PrintWriter(new OutputStreamWriter(sslSocket.getOutputStream(), "UTF-8"), true);
-            BufferedReader sslReader = new BufferedReader(new InputStreamReader(sslSocket.getInputStream(), "UTF-8"));
+            PrintWriter sslWriter = new PrintWriter(new OutputStreamWriter(sslSocket.getOutputStream(), StandardCharsets.UTF_8), true);
+            BufferedReader sslReader = new BufferedReader(new InputStreamReader(sslSocket.getInputStream(), StandardCharsets.UTF_8));
 
             // TLS 이후 다시 EHLO 명령어
             sslWriter.println("EHLO " + smtpServer);
