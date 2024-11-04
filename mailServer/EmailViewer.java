@@ -1,4 +1,5 @@
 import javax.swing.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,21 +40,24 @@ public class EmailViewer {
                 String bodyId = oneBody.getKey();
                 Map<String, String> bodyContent = (Map<String, String>) oneBody.getValue();
 
-
                 if (bodyContent.get("Content-Type").contains("text/html")) {
                     String Content = bodyContent.get("Content");
 
-                    if(Content.contains("<") || Content.contains("</")) {
-                        JLabel contentLabel = new JLabel(Content);
-                        panel.add(contentLabel);
+                    // Base64 디코딩 (필요한 경우)
+                    if (!Content.contains("<") && !Content.contains("</")) {
+                        Content = Content.replaceAll("\\s", "");
+                        byte[] decodedBytes = decoder.decode(Content);
+                        Content = new String(decodedBytes, StandardCharsets.UTF_8);
                     }
-                    else{
-//                        byte[] decodedBytes = decoder.decode(Content);
-//                        String decodedHtml = new String(decodedBytes);
-//
-//                        JLabel decodedContentLabel = new JLabel(decodedHtml);
-//                        panel.add(decodedContentLabel);
-                    }
+
+                    // JTextArea를 사용하여 텍스트를 출력
+                    JTextArea textArea = new JTextArea(Content);
+                    textArea.setLineWrap(true);  // 줄바꿈 설정
+                    textArea.setWrapStyleWord(true);  // 단어 단위로 줄바꿈
+                    textArea.setEditable(false);  // 편집 불가능하게 설정
+
+                    // 패널에 추가
+                    panel.add(new JScrollPane(textArea));  // 스크롤 가능하게 설정
 
                 }
             }

@@ -288,7 +288,7 @@ public class IMAPClient {
 
                         // 메일에 괄호가 포함되어 오는 경우와 아닌 경우 분할 <www.naver.com> 과 www.naver.com 구분
                         if (i1 == 0) header.put("To", response.substring(4));
-                        else header.put("From", response.substring(i1, i2));
+                        else header.put("To", response.substring(i1, i2));
 
                     } else if (response.contains("Subject:")) {
 
