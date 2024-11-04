@@ -14,8 +14,8 @@ public class IMAPClient {
     public static void main(String[] args) {
         String host = "imap.naver.com";
         int port = 993;
-        String username = "leegh963@naver.com";
-        String password = "";
+        String username = "sj102300@naver.com";
+        String password = "239SUYQX3Z1F";
 
         try {
             // SSL 소켓 생성 및 연결
@@ -113,11 +113,11 @@ public class IMAPClient {
 
                     } else if(response.contains("Subject:")){
 
-                        // 제목이 utf-8 로 인코딩 되어 오는 경우와 인코딩 되지 않는 경우 구분
+                        // 제목의 형식이 
                         if(response.contains("?utf-8") || response.contains("?UTF-8")){
                             int idx1 = response.lastIndexOf("?");
                             int idx2 = response.indexOf("B") + 2; // 인코딩 되는 경우는 형식이 ?인코딩형식?B?인코딩 내용 -> 이 형식이라 B 찾고 그 이후부터 디코딩해서 저장
-                            header.put("Subject" ,new String(Base64.getDecoder().decode(response.substring(idx2 , idx1)) , StandardCharsets.UTF_8));
+                            header.put("Subject" , new String(Base64.getDecoder().decode(response.substring(idx2 , idx1)) , StandardCharsets.UTF_8));
                         }else{
                             header.put("Subject" , response.substring(9));
                         }
@@ -133,9 +133,15 @@ public class IMAPClient {
                         // 본문 읽기
                         while ((response = reader.readLine()) != null
                                 && !response.startsWith("--")) {
+                            if (response.startsWith("a") && (response.contains("OK") || response.contains("NO") || response.contains("BAD"))) {
+                                break;
+                            }
+
                             if(!response.contains("charset") && !response.contains("Content") && !response.contains("boundary")){
                                 contentBuilder.append(response).append("\n");
                             }
+
+
                         }
 
                         // 본문 정보를 body에 저장
