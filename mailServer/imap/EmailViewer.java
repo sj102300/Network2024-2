@@ -59,7 +59,7 @@ public class EmailViewer {
                         content = new String(decodedBytes);
 
                     } catch (IllegalArgumentException e) {
-                        System.err.println("Invalid Base64 content: " + e.getMessage());
+//                        System.err.println("Invalid Base64 content: " + e.getMessage());
                     }
 
                     // JTextArea를 사용하여 텍스트를 출력

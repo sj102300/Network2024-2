@@ -134,15 +134,14 @@ public class IMAPClient {
                         // 제목의 형식이
                         if (response.contains("?utf-8") || response.contains("?UTF-8")) {
                             int idx1 = response.lastIndexOf("?");
-                            int idx2 = response.indexOf("B") + 2; // 인코딩 되는 경우는 형식이 ?인코딩형식?B?인코딩 내용 -> 이 형식이라 B 찾고 그 이후부터 디코딩해서 저장
+                            int idx2 = response.indexOf("B") + 2 < response.indexOf("Q") + 2 ? response.indexOf("B") + 2: response.indexOf("Q") + 2;// 인코딩 되는 경우는 형식이 ?인코딩형식?B?인코딩 내용 -> 이 형식이라 B 찾고 그 이후부터 디코딩해서 저장
                             header.put("Subject", new String(Base64.getDecoder().decode(response.substring(idx2, idx1)), StandardCharsets.UTF_8));
                         } else {
-                            if(response.length() < 9){
-                                header.put("Subject", "제목 없음");
+                            String title = response.substring(9);
+                            if(title == null || title.isEmpty()){
+                                title = "제목 없음";
                             }
-                            else{
-                                header.put("Subject", response.substring(9));
-                            }
+                            header.put("Subject", response.substring(9));
                         }
                     } else if (response.contains("Date:")) {
                         header.put("Date", response.substring(6));
