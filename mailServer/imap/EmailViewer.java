@@ -1,6 +1,7 @@
 package imap;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -41,18 +42,27 @@ public class EmailViewer {
                 String bodyId = oneBody.getKey();
                 Map<String, String> bodyContent = (Map<String, String>) oneBody.getValue();
 
-                if (bodyContent.get("Content-Type").contains("text/html")) {
-                    String Content = bodyContent.get("Content");
+                System.out.println(bodyContent.get("Content-Type"));
 
-                    // Base64 디코딩 (필요한 경우)
-                    if (!Content.contains("<") && !Content.contains("</")) {
-                        Content = Content.replaceAll("\\s", "");
-                        byte[] decodedBytes = decoder.decode(Content);
-                        Content = new String(decodedBytes, StandardCharsets.UTF_8);
+                if (bodyContent.get("Content-Type").contains("text")) {
+                    String content = bodyContent.get("Content");
+
+                    content = content.replaceAll("\\s", "");
+
+                    // Base64 형식에 맞는지 검사
+                    String base64Pattern = "^[A-Za-z0-9+/]*={0,2}$";
+                    if (content.matches(base64Pattern)) {
+                        while (content.length() % 4 != 0) {
+                            content += "=";
+                        }
+
+                        byte[] decodedBytes = decoder.decode(content);
+                        content = new String(decodedBytes);
+
                     }
 
                     // JTextArea를 사용하여 텍스트를 출력
-                    JTextArea textArea = new JTextArea(Content);
+                    JTextArea textArea = new JTextArea(content);
                     textArea.setLineWrap(true);  // 줄바꿈 설정
                     textArea.setWrapStyleWord(true);  // 단어 단위로 줄바꿈
                     textArea.setEditable(false);  // 편집 불가능하게 설정
@@ -61,19 +71,10 @@ public class EmailViewer {
                     panel.add(new JScrollPane(textArea));  // 스크롤 가능하게 설정
 
                 }
-
-                else if(bodyContent.get("Content-Type").contains("text/plain")) {
-                    String Content = bodyContent.get("Content");
-
-                    // JTextArea를 사용하여 텍스트를 출력
-                    JTextArea textArea = new JTextArea(Content);
-                    textArea.setLineWrap(true);  // 줄바꿈 설정
-                    textArea.setWrapStyleWord(true);  // 단어 단위로 줄바꿈
-                    textArea.setEditable(false);  // 편집 불가능하게 설정
-
-                    // 패널에 추가
-                    panel.add(new JScrollPane(textArea));  // 스크롤 가능하게 설정
+                else{
+                    panel.add(new JLabel("지원하지 않는 형식입니다."));  // 스크롤 가능하게 설정
                 }
+
             }
 
             // 각 이메일 사이에 10픽셀 공백 추가
