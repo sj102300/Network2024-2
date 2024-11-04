@@ -180,13 +180,10 @@ public class SmtpClient {
             sslWriter.println("QUIT");
 
             while ((line = sslReader.readLine()) != null) {
-
                 System.out.println("line = " + line);
-                if(!line.contains("221")){
-                    throw new Exception("연결이 정상적으로 종료되지 못했습니다.");
-                }
-                if (line.charAt(3) == ' ') {
-                    break;
+                // "221" 응답이 정상 종료를 나타내지만, 다른 종료 상태도 허용할 수 있음
+                if (line.startsWith("221") || line.isEmpty()) {
+                    break; // 정상적으로 종료된 것으로 간주
                 }
             }
 
