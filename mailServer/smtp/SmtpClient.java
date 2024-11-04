@@ -22,18 +22,38 @@ public class SmtpClient {
             Socket socket = new Socket(smtpServer, port);
             PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
+            String line;
             // 서버 응답 확인하는 헬퍼 메서드
             String response = reader.readLine();
             System.out.println("Server: " + response);
 
             // EHLO 명령어 전송
             writer.println("EHLO " + smtpServer);
-            readResponse(reader);
+
+            while ((line = reader.readLine()) != null) {
+
+                System.out.println("line = " + line);;
+                if(!line.contains("250")){
+                    throw new Exception("서버에 연결할 수 없습니다");
+                }
+                if (line.charAt(3) == ' ') {
+                    break;
+                }
+            }
 
             // TLS 시작 (STARTTLS)
             writer.println("STARTTLS");
-            readResponse(reader);
+
+            while ((line = reader.readLine()) != null) {
+
+                System.out.println("line = " + line);;
+                if(!line.contains("220")){
+                    throw new Exception("서버에 연결할 수 없습니다");
+                }
+                if (line.charAt(3) == ' ') {
+                    break;
+                }
+            }
 
             // TLS 를 이용하는 sslContext 를 생성, sslContext 는 ssl/tls 의 설정들을 담는다
             SSLContext sslContext = SSLContext.getInstance("TLS");
@@ -64,40 +84,111 @@ public class SmtpClient {
 
             // TLS 이후 다시 EHLO 명령어
             sslWriter.println("EHLO " + smtpServer);
-            readResponse(sslReader);
+
+            while ((line = sslReader.readLine()) != null) {
+
+                System.out.println("line = " + line);
+                if(!line.contains("250")){
+                    throw new Exception("서버에 연결할 수 없습니다");
+                }
+                if (line.charAt(3) == ' ') {
+                    break;
+                }
+            }
 
             // 인증 (AUTH LOGIN)
             sslWriter.println("AUTH LOGIN");
-            readResponse(sslReader);
+
+            while ((line = sslReader.readLine()) != null) {
+
+                System.out.println("line = " + line);
+                if(!line.contains("334") && !line.contains("235")){
+                    throw new Exception("아이디와 비밀번호를 확인하세요");
+                }
+                if (line.charAt(3) == ' ') {
+                    break;
+                }
+            }
 
             // 사용자 이름과 비밀번호를 Base64로 인코딩하여 전송
             sslWriter.println(Base64.getEncoder().encodeToString(username.getBytes()));
-            readResponse(sslReader);
+
+            while ((line = sslReader.readLine()) != null) {
+
+                System.out.println("line = " + line);
+                if(!line.contains("334") && !line.contains("235")){
+                    throw new Exception("아이디와 비밀번호를 확인하세요");
+                }
+                if (line.charAt(3) == ' ') {
+                    break;
+                }
+            }
+
             sslWriter.println(Base64.getEncoder().encodeToString(password.getBytes()));
-            readResponse(sslReader);
+
+            while ((line = sslReader.readLine()) != null) {
+
+                System.out.println("line = " + line);
+                if(!line.contains("334") && !line.contains("235")){
+                    throw new Exception("아이디와 비밀번호를 확인하세요");
+                }
+                if (line.charAt(3) == ' ') {
+                    break;
+                }
+            }
+
 
             // 메일 전송 명령어 (MAIL FROM, RCPT TO, DATA)
             sslWriter.println("MAIL FROM:<" + fromEmail + ">");
-            readResponse(sslReader);
+
+            while ((line = sslReader.readLine()) != null) {
+
+                System.out.println("line = " + line);
+                if(!line.contains("250")){
+                    throw new Exception("송신자 메일을 확인하세요");
+                }
+                if (line.charAt(3) == ' ') {
+                    break;
+                }
+            }
+
 
             // 수신자 추가
             for (String toEmail : toEmails) {
                 sslWriter.println("RCPT TO:<" + toEmail + ">");
-                readResponse(sslReader);
+
+                while ((line = sslReader.readLine()) != null) {
+
+                    System.out.println("line = " + line);
+                    if(!line.contains("250")){
+                        throw new Exception("수신자 메일을 확인하세요");
+                    }
+                    if (line.charAt(3) == ' ') {
+                        break;
+                    }
+                }
             }
 
             // 이메일의 본문 시작임을 알림
             sslWriter.println("DATA");
-            readResponse(sslReader);
 
             // 메일 본문을 구성해서 보낸다
             sslWriter.print(makeBody(subject, fromEmail, toEmails, body, attachments));
             sslWriter.flush();
-            readResponse(sslReader);
 
             // QUIT 명령어로 연결 종료
             sslWriter.println("QUIT");
-            readResponse(sslReader);
+
+            while ((line = sslReader.readLine()) != null) {
+
+                System.out.println("line = " + line);
+                if(!line.contains("221")){
+                    throw new Exception("연결이 정상적으로 종료되지 못했습니다.");
+                }
+                if (line.charAt(3) == ' ') {
+                    break;
+                }
+            }
 
             sslWriter.close();
             sslReader.close();
@@ -107,7 +198,7 @@ public class SmtpClient {
 
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+        }catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -160,17 +251,4 @@ public class SmtpClient {
         return stringBuilder.toString();
     }
 
-    // SMTP 응답 읽기 메서드
-    private static void readResponse(BufferedReader reader) throws IOException {
-        String line;
-
-        // SMTP 응답의 형태는 3자리 숫자 코드 + ' ' (공백) 혹은 '-' 으로 온다.
-        // 3자리 코드 뒤에 '-' 이 아닌 공백인 경우는 응답의 마지막 줄이라는 뜻이므로 break
-        while ((line = reader.readLine()) != null) {
-            System.out.println("Server: " + line);
-            if (line.charAt(3) == ' ') {
-                break;
-            }
-        }
-    }
 }
