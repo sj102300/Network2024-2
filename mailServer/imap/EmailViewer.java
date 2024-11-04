@@ -1,7 +1,8 @@
+package imap;
+
 import javax.swing.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
 
 public class EmailViewer {

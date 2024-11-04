@@ -1,3 +1,5 @@
+package imap;
+
 import javax.net.ssl.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -16,7 +18,7 @@ public class IMAPClient {
         String host = "imap.naver.com";
         int port = 993;
         String username = "sj102300@naver.com";
-        String password = "";
+        String password = "239SUYQX3Z1F";
 
         try {
             // SSL 소켓 생성 및 연결
