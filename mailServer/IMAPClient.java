@@ -16,7 +16,7 @@ public class IMAPClient {
         String host = "imap.naver.com";
         int port = 993;
         String username = "sj102300@naver.com";
-        String password = "";
+        String password = "239SUYQX3Z1F";
 
         try {
             // SSL 소켓 생성 및 연결
@@ -94,7 +94,10 @@ public class IMAPClient {
 
                 while ((response = reader.readLine()) != null) {
 
-                    if(response.contains("From:")){
+                    System.out.println(response);
+
+
+                    if(response.startsWith("From:")){
 
                         int i1 = response.indexOf("<") + 1;
                         int i2 = response.indexOf(">");
@@ -103,16 +106,16 @@ public class IMAPClient {
                         if(i1 == 0) header.put("From" , response.substring(6));
                         else header.put("From", response.substring(i1 , i2));
 
-                    } else if (response.contains("To:")) {
+                    } else if (response.startsWith("To:")) {
 
                         int i1 = response.indexOf("<") + 1;
                         int i2 = response.indexOf(">");
 
                         // 메일에 괄호가 포함되어 오는 경우와 아닌 경우 분할 <www.naver.com> 과 www.naver.com 구분
                         if (i1 == 0) header.put("To", response.substring(4));
-                        else header.put("From", response.substring(i1 , i2));
+                        else header.put("To", response.substring(i1 , i2));
 
-                    } else if(response.contains("Subject:")){
+                    } else if(response.startsWith("Subject:")){
 
                         // 제목의 형식이 
                         if(response.contains("?utf-8") || response.contains("?UTF-8")){
@@ -162,7 +165,6 @@ public class IMAPClient {
                 }
 
             }
-            System.out.println("emails = " + emails);
 
             sendCommand(writer, reader, "a5 LOGOUT");
 
@@ -187,7 +189,7 @@ public class IMAPClient {
         }
     }
 
-    public static Map<String, Map<String, Object>>  getUnreadEmails(String[] args) {
+    public static Map<String, Map<String, Object>>  getUnreadEmails() {
 
         String host = "imap.naver.com";
         int port = 993;
@@ -315,7 +317,7 @@ public class IMAPClient {
                                 break;
                             }
 
-                            if (!response.contains("charset") && !response.contains("Content") && !response.contains("boundary")) {
+                            if (!response.contains("charset") && !response.contains("Content") && !response.contains("boundary") && !response.contains("BODY")) {
                                 contentBuilder.append(response).append("\n");
                             }
                         }
@@ -338,7 +340,6 @@ public class IMAPClient {
                 }
 
             }
-            System.out.println("emails = " + emails);
 
             sendCommand(writer, reader, "a5 LOGOUT");
 
