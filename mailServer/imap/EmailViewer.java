@@ -61,6 +61,19 @@ public class EmailViewer {
                     panel.add(new JScrollPane(textArea));  // 스크롤 가능하게 설정
 
                 }
+
+                else if(bodyContent.get("Content-Type").contains("text/plain")) {
+                    String Content = bodyContent.get("Content");
+
+                    // JTextArea를 사용하여 텍스트를 출력
+                    JTextArea textArea = new JTextArea(Content);
+                    textArea.setLineWrap(true);  // 줄바꿈 설정
+                    textArea.setWrapStyleWord(true);  // 단어 단위로 줄바꿈
+                    textArea.setEditable(false);  // 편집 불가능하게 설정
+
+                    // 패널에 추가
+                    panel.add(new JScrollPane(textArea));  // 스크롤 가능하게 설정
+                }
             }
 
             // 각 이메일 사이에 10픽셀 공백 추가
