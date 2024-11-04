@@ -47,11 +47,10 @@ public class EmailViewer {
                 if (bodyContent.get("Content-Type").contains("text")) {
                     String content = bodyContent.get("Content");
 
-                    content = content.replaceAll("\\s", "");
 
-                    // Base64 형식에 맞는지 검사
-                    String base64Pattern = "^[A-Za-z0-9+/]*={0,2}$";
-                    if (content.matches(base64Pattern)) {
+                    try {
+                        content = content.replaceAll("\\s", "");
+                        // 문자열 길이를 4의 배수로 맞추기 위해 패딩 추가
                         while (content.length() % 4 != 0) {
                             content += "=";
                         }
@@ -59,6 +58,8 @@ public class EmailViewer {
                         byte[] decodedBytes = decoder.decode(content);
                         content = new String(decodedBytes);
 
+                    } catch (IllegalArgumentException e) {
+                        System.err.println("Invalid Base64 content: " + e.getMessage());
                     }
 
                     // JTextArea를 사용하여 텍스트를 출력
@@ -72,7 +73,7 @@ public class EmailViewer {
 
                 }
                 else{
-                    panel.add(new JLabel("지원하지 않는 형식입니다."));  // 스크롤 가능하게 설정
+                    panel.add(new JTextArea("지원하지 않는 형식입니다."));  // 스크롤 가능하게 설정
                 }
 
             }
