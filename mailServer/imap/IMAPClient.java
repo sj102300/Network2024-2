@@ -29,14 +29,13 @@ public class IMAPClient {
 
         String host = "imap.naver.com";
         int port = 993;
-        String username = "ye6194@naver.com";
-        String password = "CQB58HMKSRZE";
+        String username = "sj102300@naver.com";
+        String password = "";
 
         Map<String, Map<String, Object>> emails = new HashMap<>();
 
         try {
             // SSL 소켓 생성 및 연결
-
             Socket socket = new Socket(host, port);
 
             SSLContext sslContext = SSLContext.getInstance("TLS");

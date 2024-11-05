@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 
 public class EmailViewer {
     public static void main(String[] args) throws UnsupportedEncodingException {
-        // 예제 이메일 데이터를 포함하는 HashMap
+        // 이메일 데이터 읽어오기
         Map<String, Map<String, Object>> emails = IMAPClient.getUnreadEmails();
 
         // JFrame 설정
@@ -33,7 +33,6 @@ public class EmailViewer {
             Map<String, Object> body = (Map<String, Object>) response.get("body");
 
             System.out.println(header.toString());
-            panel.add(new JLabel("ID: " + emailId));
             panel.add(new JLabel("From: " + header.get("From")));
             panel.add(new JLabel("To: " + header.get("To")));
             panel.add(new JLabel("Subject: " + header.get("Subject")));
@@ -59,7 +58,6 @@ public class EmailViewer {
                 }
                 else if(encodingType.contains("base64")){
                     content = decodeBase64(content);
-                    System.out.println("here");
                 }
                 else if(encodingType.equals("quoted-printable")){
                     content = decodeQuotedPrintable(content);
@@ -77,7 +75,6 @@ public class EmailViewer {
                 // 패널에 추가
                 panel.add(new JScrollPane(textArea));  // 스크롤 가능하게 설정
             }
-
 
             // 각 이메일 사이에 10픽셀 공백 추가
             panel.add(Box.createVerticalStrut(10));
