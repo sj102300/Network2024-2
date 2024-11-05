@@ -30,7 +30,7 @@ public class IMAPClient {
         String host = "imap.naver.com";
         int port = 993;
         String username = "ye6194@naver.com";
-        String password = "";
+        String password = "CQB58HMKSRZE";
 
         Map<String, Map<String, Object>> emails = new HashMap<>();
 
@@ -148,6 +148,7 @@ public class IMAPClient {
                     } else if (response.contains("Date:")) {
                         header.put("Date", response.substring(6));
                     }
+                    String EncodingType = "";
 
                     if (response.startsWith("Content-Type:") && !response.contains("multipart")) {
                         // content-type 이 multipart 인 경우 본문에서 content-type 을 가져옴, 맨 아래에 multipart 와 아닌것 구분해서 예시에 작성
@@ -157,6 +158,10 @@ public class IMAPClient {
                         // 본문 읽기
                         while ((response = reader.readLine()) != null
                                 && !response.startsWith("--")) {
+
+                            if(response.startsWith("Content-Transfer-Encoding:")){
+                                EncodingType = response.substring(27);
+                            }
 
                             if (response.startsWith("a") && (response.contains("OK") || response.contains("NO") || response.contains("BAD"))) {
                                 break;
@@ -169,6 +174,7 @@ public class IMAPClient {
 
                         // 본문 정보를 body에 저장
                         Map<String, String> bodyPart = new HashMap<>();
+                        bodyPart.put("Content-Transfer-Encoding", EncodingType);
                         bodyPart.put("Content-Type", contentType);
                         bodyPart.put("Content", contentBuilder.toString().trim());
                         body.put(String.valueOf(bodyCount++), bodyPart);
