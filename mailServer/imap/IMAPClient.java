@@ -1,10 +1,7 @@
 package imap;
 
 import javax.net.ssl.*;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
@@ -32,8 +29,8 @@ public class IMAPClient {
 
         String host = "imap.naver.com";
         int port = 993;
-        String username = "sj102300@naver.com";
-        String password = "239SUYQX3Z1F";
+        String username = "ye6194@naver.com";
+        String password = "";
 
         Map<String, Map<String, Object>> emails = new HashMap<>();
 
@@ -78,7 +75,7 @@ public class IMAPClient {
             sendCommand(writer, reader, "a2 SELECT INBOX");
 
             // 3. 메일 목록 가져오기
-            writer.println("a3 SEARCH ALL");
+            writer.println("a3 SEARCH UNSEEN");
             System.out.println("C: " + "a3 SEARCH UNSEEN");
 
             // 검색 결과에서 메일 ID 목록을 추출하고, 각 ID에 대해 메일을 FETCH
@@ -131,14 +128,19 @@ public class IMAPClient {
 
                     } else if (response.contains("Subject:")) {
 
-                        // 제목의 형식이
-                        if (response.contains("?utf-8") || response.contains("?UTF-8")) {
-                            int idx1 = response.lastIndexOf("?");
-                            int idx2 = response.indexOf("B") + 2 < response.indexOf("Q") + 2 ? response.indexOf("B") + 2: response.indexOf("Q") + 2;// 인코딩 되는 경우는 형식이 ?인코딩형식?B?인코딩 내용 -> 이 형식이라 B 찾고 그 이후부터 디코딩해서 저장
-                            header.put("Subject", new String(Base64.getDecoder().decode(response.substring(idx2, idx1)), StandardCharsets.UTF_8));
-                        } else {
+                        if(response.contains("=?UTF-8?B?") || response.contains("=?utf-8?B?")) {
+                            String title = response.substring(19, response.length() - 2);
+                            title = decodeBase64(title);
+                            header.put("Subject", title);
+                        }
+                        else if(response.contains("=?UTF-8?Q?") || response.contains("=?utf-8?Q?")) {
+                            String title = response.substring(19, response.length() - 2);
+                            title = decodeQuotedPrintable(title);
+                            header.put("Subject", title);
+                        }
+                        else{
                             String title = response.substring(9);
-                            if(title == null || title.isEmpty()){
+                            if(title.isEmpty()){
                                 title = "제목 없음";
                             }
                             header.put("Subject", response.substring(9));
@@ -194,41 +196,28 @@ public class IMAPClient {
 
         return emails;
     }
+
+    private static String decodeBase64(String input) {
+        byte[] decodedBytes = Base64.getDecoder().decode(input);
+        return new String(decodedBytes);
+    }
+
+    private static String decodeQuotedPrintable(String input) throws UnsupportedEncodingException {
+        StringBuilder decoded = new StringBuilder();
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (c == '=' && i + 2 < input.length()) {
+                String hex = input.substring(i + 1, i + 3);
+                int value = Integer.parseInt(hex, 16);
+                decoded.append((char) value);
+                i += 2;
+            } else if (c == '_') {
+                decoded.append(' ');
+            } else {
+                decoded.append(c);
+            }
+        }
+        return decoded.toString();
+    }
+
 }
-
-//From: sender@example.com
-//To: receiver@example.com
-//Subject: Test Multipart Email
-//MIME-Version: 1.0
-//Content-Type: multipart/alternative; boundary="boundary123" ---> 여기 부분 content-type 은 안가져오고
-//
-// --boundary123
-//Content-Type: text/plain; charset="UTF-8" -> 여기 부분 content-type 을 가져온 후
-//Content-Transfer-Encoding: 7bit
-//
-//This is the plain text version of the email. --> 내용 가져온다
-//
-//--boundary123
-//Content-Type: text/html; charset="UTF-8"
-//Content-Transfer-Encoding: 7bit
-//
-//        <html>
-//<body>
-//<p>This is the <b>HTML version</b> of the email.</p>
-//</body>
-//</html>
-//
-//        --boundary123--
-
-
-
-// 평문인 경우
-
-//From: sender@example.com
-//To: receiver@example.com
-//Subject: Test Single Part Email
-//MIME-Version: 1.0
-//Content-Type: text/plain; charset="UTF-8" --> 평문인 경우 바로 저장
-//Content-Transfer-Encoding: 7bit
-//
-//This is a simple text email without any attachments or HTML.
